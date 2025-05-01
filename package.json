@@ -1,0 +1,97 @@
+{
+  "name": "react-editor",
+  "author": {
+    "name": "Hidenori Takaku"
+  },
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "./",
+  "main": "build/electron/electron.js",
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@monaco-editor/react": "^4.7.0",
+    "@mui/icons-material": "^7.0.2",
+    "@mui/material": "^7.0.2",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@types/jest": "^27.5.2",
+    "@types/node": "^16.18.86",
+    "@types/react": "^18.2.61",
+    "@types/react-dom": "^18.2.19",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-resizable-panels": "^2.1.9",
+    "react-scripts": "5.0.1",
+    "typescript": "^4.9.5",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "clean": "rm -rf build dist",
+    "build": "react-scripts build && npm run build-electron && npm run copy-electron",
+    "build-electron": "tsc -p electron/tsconfig.json",
+    "copy-electron": "mkdir -p build/electron && cp -r electron/dialogs build/electron/",
+    "electron:dev": "npm run clean && npm run build && concurrently \"cross-env BROWSER=none NODE_ENV=development ELECTRON_START_URL=http://localhost:3000 npm start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "npm run clean && npm run build && electron-builder",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^29.1.0",
+    "electron-builder": "^24.13.3",
+    "electron-builder-squirrel-windows": "^24.13.3",
+    "postcss-selector-parser": "^6.1.2",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.example.react-editor",
+    "files": [
+      "build/**/*"
+    ],
+    "extraMetadata": {
+      "main": "build/electron/electron.js"
+    },
+    "directories": {
+      "buildResources": "assets",
+      "output": "dist"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.utilities",
+      "identity": null,
+      "icon": "assets/icon.png",
+      "darkModeSupport": true
+    },
+    "asar": false,
+    "asarUnpack": [
+      "node_modules/**/*.node"
+    ]
+  }
+}
