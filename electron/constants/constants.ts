@@ -87,22 +87,14 @@ const CHANNELS: Channels = {
 };
 
 // Theme options
-const THEMES: string[] = [
-  'System',
-  'Classic',
-  'Dark',
-  'Vintage',
-  'Blue',
-  'Pink',
-  'Purple',
-  'Navy',
-  'Forest'
-];
+const THEMES = ['Light', 'Dark'] as const;
+type Theme = typeof THEMES[number];
 
 export {
   APP,
   WINDOW_SIZES,
   IMAGE,
   CHANNELS,
-  THEMES
+  THEMES,
+  type Theme
 };

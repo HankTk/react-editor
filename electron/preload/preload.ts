@@ -9,11 +9,17 @@ interface Channels {
     IMAGE_SELECTION_ERROR: string;
     FILE_SAVE_ERROR: string;
     FILE_OPEN_ERROR: string;
+    NEW_FILE: string;
+    OPEN_FILE: string;
+    SAVE_FILE: string;
+    SPLIT_MODE_CHANGE: string;
   };
   OUTGOING: {
     RESET_IMAGE: string;
     SAVE_FILE: string;
     OPEN_FILE: string;
+    NEW_FILE: string;
+    UPDATE_SPLIT_MODE: string;
   };
 }
 
@@ -24,12 +30,18 @@ const CHANNELS: Channels = {
     RESET_IMAGE: 'reset-image',
     IMAGE_SELECTION_ERROR: 'image-selection-error',
     FILE_SAVE_ERROR: 'file-save-error',
-    FILE_OPEN_ERROR: 'file-open-error'
+    FILE_OPEN_ERROR: 'file-open-error',
+    NEW_FILE: 'new-file',
+    OPEN_FILE: 'open-file',
+    SAVE_FILE: 'save-file',
+    SPLIT_MODE_CHANGE: 'split-mode-change'
   },
   OUTGOING: {
     RESET_IMAGE: 'reset-image',
     SAVE_FILE: 'save-file',
-    OPEN_FILE: 'open-file'
+    OPEN_FILE: 'open-file',
+    NEW_FILE: 'new-file',
+    UPDATE_SPLIT_MODE: 'update-split-mode'
   }
 };
 
@@ -52,6 +64,7 @@ interface ElectronAPI {
     resetImage: () => void;
     saveFile: (content: string, filePath?: string) => Promise<string | null>;
     openFile: () => Promise<{ content: string; filePath: string } | null>;
+    newFile: () => void;
   };
 }
 
@@ -90,6 +103,9 @@ contextBridge.exposeInMainWorld(
       },
       openFile: async () => {
         return await ipcRenderer.invoke(CHANNELS.OUTGOING.OPEN_FILE);
+      },
+      newFile: () => {
+        ipcRenderer.send(CHANNELS.OUTGOING.NEW_FILE);
       }
     }
   } as ElectronAPI

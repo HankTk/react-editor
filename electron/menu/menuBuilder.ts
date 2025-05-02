@@ -1,8 +1,14 @@
-import { Menu, screen, dialog, MenuItemConstructorOptions } from 'electron';
-import { THEMES, IMAGE } from '../constants/constants';
+import { Menu, screen, dialog, MenuItemConstructorOptions, BrowserWindow, ipcMain } from 'electron';
+import { IMAGE } from '../constants/constants';
 import { getMainWindow } from '../windows/mainWindow';
 import { createAboutWindow } from '../windows/aboutWindow';
 import { handleImageSelection } from '../handlers/imageHandler';
+
+// Theme options
+const THEMES = ['Light', 'Dark'] as const;
+type Theme = typeof THEMES[number];
+
+let currentSplitMode = 'horizontal';
 
 function createApplicationMenu(): void {
   const template: MenuItemConstructorOptions[] = [
@@ -10,48 +16,36 @@ function createApplicationMenu(): void {
       label: 'File',
       submenu: [
         {
-          label: 'Select Clock Image',
-          click: () => {
-            const mainWindow = getMainWindow();
-            if (!mainWindow) return;
-
-            const primaryDisplay = screen.getPrimaryDisplay();
-            const { width: screenWidth, height: screenHeight } = primaryDisplay.size;
-
-            // Calculate dialog dimensions
-            const dialogWidth = 800;
-            const dialogHeight = 600;
-
-            // Calculate center position relative to screen
-            const x = Math.floor((screenWidth - dialogWidth) / 2);
-            const y = Math.floor((screenHeight - dialogHeight) / 2);
-
-            dialog.showOpenDialog({
-              properties: ['openFile'],
-              filters: [
-                { name: 'Images', extensions: IMAGE.SUPPORTED_EXTENSIONS.map(ext => ext.slice(1)) }
-              ],
-              defaultPath: mainWindow.getTitle(),
-              buttonLabel: 'Select',
-              title: 'Select Clock Image'
-            }).then(result => {
-              if (!result.canceled && result.filePaths.length > 0) {
-                handleImageSelection(mainWindow, result.filePaths[0]);
-              }
-            }).catch(err => {
-              console.error('Error selecting image:', err);
-            });
-          }
-        },
-        {
-          label: 'Reset Image',
+          label: 'New File',
+          accelerator: 'CmdOrCtrl+N',
           click: () => {
             const mainWindow = getMainWindow();
             if (mainWindow) {
-              mainWindow.webContents.send('reset-image');
+              mainWindow.webContents.send('new-file');
             }
           }
         },
+        {
+          label: 'Open',
+          accelerator: 'CmdOrCtrl+O',
+          click: () => {
+            const mainWindow = getMainWindow();
+            if (mainWindow) {
+              mainWindow.webContents.send('open-file');
+            }
+          }
+        },
+        {
+          label: 'Save',
+          accelerator: 'CmdOrCtrl+S',
+          click: () => {
+            const mainWindow = getMainWindow();
+            if (mainWindow) {
+              mainWindow.webContents.send('save-file');
+            }
+          }
+        },
+        { type: 'separator' },
         {
           label: 'Theme',
           submenu: createThemeSubmenu()
@@ -79,6 +73,7 @@ function createApplicationMenu(): void {
     },
     {
       label: 'View',
+      id: 'view-menu',
       submenu: createViewSubmenu()
     },
     {
@@ -96,20 +91,58 @@ function createApplicationMenu(): void {
   Menu.setApplicationMenu(menu);
 }
 
-function createThemeSubmenu(): MenuItemConstructorOptions[] {
+const createThemeSubmenu = (): MenuItemConstructorOptions[] => {
   return THEMES.map(theme => ({
     label: theme,
+    type: 'radio' as const,
+    checked: false,
     click: () => {
-      const mainWindow = getMainWindow();
+      const mainWindow = BrowserWindow.getFocusedWindow();
       if (mainWindow) {
         mainWindow.webContents.send('theme-change', theme);
       }
     }
   }));
-}
+};
 
 function createViewSubmenu(): MenuItemConstructorOptions[] {
   const baseItems: MenuItemConstructorOptions[] = [
+    {
+      label: 'Split View',
+      submenu: [
+        {
+          label: 'Horizontal Split',
+          id: 'split-horizontal',
+          accelerator: 'CmdOrCtrl+Shift+H',
+          type: 'radio',
+          checked: currentSplitMode === 'vertical',
+          click: () => {
+            currentSplitMode = 'vertical';
+            const mainWindow = getMainWindow();
+            if (mainWindow) {
+              mainWindow.webContents.send('split-mode-change', 'vertical');
+              createApplicationMenu();
+            }
+          }
+        },
+        {
+          label: 'Vertical Split',
+          id: 'split-vertical',
+          accelerator: 'CmdOrCtrl+Shift+V',
+          type: 'radio',
+          checked: currentSplitMode === 'horizontal',
+          click: () => {
+            currentSplitMode = 'horizontal';
+            const mainWindow = getMainWindow();
+            if (mainWindow) {
+              mainWindow.webContents.send('split-mode-change', 'horizontal');
+              createApplicationMenu();
+            }
+          }
+        }
+      ]
+    },
+    { type: 'separator' },
     { role: 'resetZoom' },
     { role: 'zoomIn' },
     { role: 'zoomOut' },
@@ -125,6 +158,12 @@ function createViewSubmenu(): MenuItemConstructorOptions[] {
     ...baseItems
   ] : baseItems;
 }
+
+// Listen for split mode updates from renderer
+ipcMain.on('update-split-mode', (_event, mode) => {
+  currentSplitMode = mode;
+  createApplicationMenu();
+});
 
 export {
   createApplicationMenu

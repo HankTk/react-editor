@@ -8,6 +8,7 @@ interface ElectronAPI {
     resetImage: () => void;
     saveFile: (content: string, filePath?: string) => Promise<string | null>;
     openFile: () => Promise<{ content: string; filePath: string } | null>;
+    newFile: () => void;
   };
 }
 
@@ -32,6 +33,13 @@ export function useElectron() {
     return await window.electron.ipcRenderer.openFile();
   }, []);
 
+  const newFile = useCallback(() => {
+    if (!window.electron?.ipcRenderer?.newFile) {
+      throw new Error('Electron API not available');
+    }
+    window.electron.ipcRenderer.newFile();
+  }, []);
+
   const resetImage = useCallback(() => {
     if (!window.electron?.ipcRenderer?.resetImage) {
       throw new Error('Electron API not available');
@@ -42,6 +50,7 @@ export function useElectron() {
   return {
     saveFile,
     openFile,
+    newFile,
     resetImage
   };
 } 

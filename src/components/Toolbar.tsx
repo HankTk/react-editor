@@ -1,11 +1,9 @@
 import React from 'react';
-import { AppBar, Toolbar as MuiToolbar, Typography, IconButton, Tooltip, ButtonGroup } from '@mui/material';
+import { AppBar, Toolbar as MuiToolbar, IconButton, Tooltip, ButtonGroup } from '@mui/material';
 import {
   Undo as UndoIcon,
   Redo as RedoIcon,
   FormatSize as FormatSizeIcon,
-  DarkMode as DarkModeIcon,
-  LightMode as LightModeIcon,
   Save as SaveIcon,
   ViewColumn as VerticalIcon,
   ViewStream as HorizontalIcon
@@ -17,7 +15,6 @@ interface ToolbarProps {
   onSplitModeChange?: (mode: 'horizontal' | 'vertical') => void;
   showPreview?: boolean;
   isDarkMode?: boolean;
-  onThemeToggle?: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({ 
@@ -25,15 +22,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
   splitMode = 'horizontal',
   onSplitModeChange,
   showPreview = true,
-  isDarkMode = true,
-  onThemeToggle
+  isDarkMode = true
 }) => {
   return (
     <AppBar position="static" color="default" elevation={0}>
-      <MuiToolbar variant="dense">
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          React Editor
-        </Typography>
+      <MuiToolbar variant="dense" sx={{ justifyContent: 'flex-end' }}>
         <IconButton size="small" onClick={onSave}>
           <SaveIcon />
         </IconButton>
@@ -46,11 +39,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <IconButton size="small">
           <FormatSizeIcon />
         </IconButton>
-        <Tooltip title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-          <IconButton size="small" onClick={onThemeToggle}>
-            {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
-        </Tooltip>
         {showPreview && (
           <ButtonGroup size="small" aria-label="split mode">
             <Tooltip title="Horizontal split">

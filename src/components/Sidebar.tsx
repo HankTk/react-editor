@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Drawer, List, ListItem, ListItemIcon, ListItemText, Divider, Box } from '@mui/material';
+import { Drawer, List, ListItem, ListItemIcon, ListItemText, Divider, Box, Typography } from '@mui/material';
 import {
   Description as DescriptionIcon,
   Settings as SettingsIcon,
@@ -42,7 +42,7 @@ const drawerWidth = 240;
 
 const Sidebar: React.FC<SidebarProps> = ({ onFileOpen, currentContent = '', currentFilePath = null }) => {
   const boxRef = useRef<HTMLDivElement>(null);
-  const { saveFile, openFile } = useElectron();
+  const { saveFile, openFile, newFile } = useElectron();
 
   useEffect(() => {
     let resizeObserver: ResizeObserver | null = null;
@@ -105,6 +105,31 @@ const Sidebar: React.FC<SidebarProps> = ({ onFileOpen, currentContent = '', curr
     console.log('Opening settings...');
   };
 
+  // Listen for menu actions
+  useEffect(() => {
+    const handleNewFileMenu = () => {
+      handleNewFile();
+    };
+
+    const handleOpenFileMenu = () => {
+      handleOpenFile();
+    };
+
+    const handleSaveFileMenu = () => {
+      handleSaveFile();
+    };
+
+    window.electron.ipcRenderer.on('new-file', handleNewFileMenu);
+    window.electron.ipcRenderer.on('open-file', handleOpenFileMenu);
+    window.electron.ipcRenderer.on('save-file', handleSaveFileMenu);
+
+    return () => {
+      window.electron.ipcRenderer.removeListener('new-file', handleNewFileMenu);
+      window.electron.ipcRenderer.removeListener('open-file', handleOpenFileMenu);
+      window.electron.ipcRenderer.removeListener('save-file', handleSaveFileMenu);
+    };
+  }, [currentContent, currentFilePath, onFileOpen]);
+
   return (
     <Drawer
       variant="permanent"
@@ -117,25 +142,37 @@ const Sidebar: React.FC<SidebarProps> = ({ onFileOpen, currentContent = '', curr
         },
       }}
     >
-      <Box ref={boxRef} sx={{ overflow: 'auto', mt: 1 }}>
+      <Typography 
+        variant="h5" 
+        component="div" 
+        sx={{ 
+          p: 2, 
+          textAlign: 'center',
+          color: 'inherit',
+          fontSize: '1.5rem'
+        }}
+      >
+        React Editor
+      </Typography>
+      <Box ref={boxRef} sx={{ overflow: 'auto' }}>
         <List>
           <ListItem component="div" onClick={handleNewFile} sx={{ cursor: 'pointer' }}>
             <ListItemIcon>
               <DescriptionIcon />
             </ListItemIcon>
-            <ListItemText primary="New File" />
+            <ListItemText primary="New File" sx={{ color: 'text.primary' }} />
           </ListItem>
           <ListItem component="div" onClick={handleOpenFile} sx={{ cursor: 'pointer' }}>
             <ListItemIcon>
               <FolderOpenIcon />
             </ListItemIcon>
-            <ListItemText primary="Open" />
+            <ListItemText primary="Open" sx={{ color: 'text.primary' }} />
           </ListItem>
           <ListItem component="div" onClick={handleSaveFile} sx={{ cursor: 'pointer' }}>
             <ListItemIcon>
               <SaveIcon />
             </ListItemIcon>
-            <ListItemText primary="Save" />
+            <ListItemText primary="Save" sx={{ color: 'text.primary' }} />
           </ListItem>
         </List>
         <Divider />
@@ -144,7 +181,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onFileOpen, currentContent = '', curr
             <ListItemIcon>
               <SettingsIcon />
             </ListItemIcon>
-            <ListItemText primary="Settings" />
+            <ListItemText primary="Settings" sx={{ color: 'text.primary' }} />
           </ListItem>
         </List>
       </Box>
