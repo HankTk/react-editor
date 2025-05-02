@@ -5,6 +5,7 @@ import {
   Redo as RedoIcon,
   FormatSize as FormatSizeIcon,
   DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon,
   Save as SaveIcon,
   ViewColumn as VerticalIcon,
   ViewStream as HorizontalIcon
@@ -15,13 +16,17 @@ interface ToolbarProps {
   splitMode?: 'horizontal' | 'vertical';
   onSplitModeChange?: (mode: 'horizontal' | 'vertical') => void;
   showPreview?: boolean;
+  isDarkMode?: boolean;
+  onThemeToggle?: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({ 
   onSave, 
   splitMode = 'horizontal',
   onSplitModeChange,
-  showPreview = true 
+  showPreview = true,
+  isDarkMode = true,
+  onThemeToggle
 }) => {
   return (
     <AppBar position="static" color="default" elevation={0}>
@@ -41,9 +46,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <IconButton size="small">
           <FormatSizeIcon />
         </IconButton>
-        <IconButton size="small">
-          <DarkModeIcon />
-        </IconButton>
+        <Tooltip title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+          <IconButton size="small" onClick={onThemeToggle}>
+            {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
+        </Tooltip>
         {showPreview && (
           <ButtonGroup size="small" aria-label="split mode">
             <Tooltip title="Horizontal split">

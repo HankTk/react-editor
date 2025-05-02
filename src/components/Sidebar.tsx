@@ -117,7 +117,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onFileOpen, currentContent = '', curr
         },
       }}
     >
-      <Box ref={boxRef} sx={{ overflow: 'auto', mt: 2 }}>
+      <Box ref={boxRef} sx={{ overflow: 'auto', mt: 1 }}>
         <List>
           <ListItem component="div" onClick={handleNewFile} sx={{ cursor: 'pointer' }}>
             <ListItemIcon>
