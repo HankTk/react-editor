@@ -14,7 +14,6 @@ function createMainWindow(): BrowserWindow {
     frame: true,
     movable: true,
     transparent: false,
-    alwaysOnTop: true,
     resizable: true,
     icon: path.join(__dirname, '../icon.png'),
     webPreferences: {
@@ -42,7 +41,6 @@ function configureMainWindow(): void {
 
   mainWindow.setBackgroundColor('#00000000');
   mainWindow.setVisibleOnAllWorkspaces(true);
-  mainWindow.setAlwaysOnTop(true, 'floating');
   mainWindow.setHasShadow(false);
   mainWindow.setOpacity(1);
 

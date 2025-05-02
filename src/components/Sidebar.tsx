@@ -89,12 +89,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onFileOpen, currentContent = '', curr
 
   const handleSaveFile = async () => {
     try {
+      if (!currentContent) {
+        console.error('No content to save');
+        return;
+      }
       const savedPath = await saveFile(currentContent, currentFilePath || undefined);
       if (savedPath) {
-        console.log('File saved successfully at:', savedPath);
         onFileOpen(currentContent, savedPath);
-      } else {
-        console.log('Save operation was cancelled or failed');
       }
     } catch (error) {
       console.error('Error saving file:', error);

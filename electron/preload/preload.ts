@@ -13,6 +13,7 @@ interface Channels {
     OPEN_FILE: string;
     SAVE_FILE: string;
     SPLIT_MODE_CHANGE: string;
+    FILE_SAVED: string;
   };
   OUTGOING: {
     RESET_IMAGE: string;
@@ -34,7 +35,8 @@ const CHANNELS: Channels = {
     NEW_FILE: 'new-file',
     OPEN_FILE: 'open-file',
     SAVE_FILE: 'save-file',
-    SPLIT_MODE_CHANGE: 'split-mode-change'
+    SPLIT_MODE_CHANGE: 'split-mode-change',
+    FILE_SAVED: 'file-saved'
   },
   OUTGOING: {
     RESET_IMAGE: 'reset-image',
@@ -99,7 +101,12 @@ contextBridge.exposeInMainWorld(
         ipcRenderer.send(CHANNELS.OUTGOING.RESET_IMAGE);
       },
       saveFile: async (content: string, filePath?: string) => {
-        return await ipcRenderer.invoke(CHANNELS.OUTGOING.SAVE_FILE, content, filePath);
+        try {
+          return await ipcRenderer.invoke('save-file', content, filePath);
+        } catch (error) {
+          console.error('Error in saveFile:', error);
+          throw error;
+        }
       },
       openFile: async () => {
         return await ipcRenderer.invoke(CHANNELS.OUTGOING.OPEN_FILE);

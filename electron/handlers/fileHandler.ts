@@ -9,8 +9,6 @@ import path from 'path';
  */
 async function openFile(mainWindow: BrowserWindow): Promise<{ content: string; filePath: string } | null> {
   try {
-    console.log('Main process: openFile called');
-    
     if (!mainWindow) {
       console.error('Main process: Invalid main window reference');
       throw new Error('Invalid main window reference');
@@ -25,16 +23,12 @@ async function openFile(mainWindow: BrowserWindow): Promise<{ content: string; f
       ]
     });
 
-    console.log('Open dialog result:', result);
-
     if (result.canceled || !result.filePaths.length) {
-      console.log('Main process: Open operation cancelled by user');
       return null;
     }
 
     const filePath = result.filePaths[0];
     const content = await fs.promises.readFile(filePath, 'utf8');
-    console.log('Main process: File read successfully');
     return { content, filePath };
   } catch (error) {
     console.error('Main process: Error opening file:', error instanceof Error ? error.message : 'Unknown error');
@@ -54,10 +48,6 @@ async function openFile(mainWindow: BrowserWindow): Promise<{ content: string; f
  */
 async function saveFile(mainWindow: BrowserWindow, content: string, filePath?: string): Promise<string | null> {
   try {
-    console.log('Main process: saveFile called');
-    console.log('File path provided:', filePath);
-    console.log('Content length:', content.length);
-
     if (!mainWindow) {
       console.error('Main process: Invalid main window reference');
       throw new Error('Invalid main window reference');
@@ -65,10 +55,8 @@ async function saveFile(mainWindow: BrowserWindow, content: string, filePath?: s
 
     let finalFilePath: string | null = filePath || null;
 
-    // Show save dialog if file path is undefined, null, empty, or untitled
     if (!finalFilePath || finalFilePath === '' || 
         path.basename(finalFilePath) === 'untitled' || path.basename(finalFilePath) === 'untitled.txt') {
-      console.log('Main process: No file path provided or untitled file, showing save dialog');
       const result = await dialog.showSaveDialog(mainWindow, {
         title: 'Save File',
         defaultPath: path.join(app.getPath('documents'), 'untitled'),
@@ -79,15 +67,11 @@ async function saveFile(mainWindow: BrowserWindow, content: string, filePath?: s
         properties: ['showOverwriteConfirmation']
       });
 
-      console.log('Save dialog result:', result);
-
       if (result.canceled || !result.filePath) {
-        console.log('Main process: Save operation cancelled by user');
         return null;
       }
 
       finalFilePath = result.filePath;
-      // Only append .txt if there's no extension at all
       if (!path.extname(finalFilePath)) {
         finalFilePath = `${finalFilePath}.txt`;
       }
@@ -97,12 +81,7 @@ async function saveFile(mainWindow: BrowserWindow, content: string, filePath?: s
       throw new Error('No valid file path provided');
     }
 
-    // Write the content to the file
-    console.log('Main process: Writing file to:', finalFilePath);
     await fs.promises.writeFile(finalFilePath, content, 'utf8');
-    console.log('Main process: File written successfully');
-    
-    // Send the new file path to the renderer process
     mainWindow.webContents.send('file-saved', finalFilePath);
     
     return finalFilePath;
