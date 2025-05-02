@@ -68,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onFileOpen, currentContent = '', curr
 
   const handleNewFile = () => {
     if (onFileOpen) {
-      onFileOpen('', 'untitled.txt');
+      onFileOpen('', 'untitled.mermaid');
     } else {
       console.error('onFileOpen callback is not provided');
     }

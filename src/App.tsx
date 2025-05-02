@@ -12,6 +12,11 @@ type SplitMode = 'horizontal' | 'vertical';
 const initialContent = `// Welcome to the Code Editor
 // Start editing your code here...`;
 
+const initialMermaidContent = `graph TD
+    A[Start] --> B{Is it?}
+    B -- Yes --> C[OK]
+    B -- No --> D[End]`;
+
 function App() {
   const [editorContent, setEditorContent] = useState(initialContent);
   const [editorLanguage, setEditorLanguage] = useState('plaintext');
@@ -181,60 +186,48 @@ function App() {
   };
 
   const handleFileOpen = (content: string, fileName: string) => {
-    setEditorContent(content);
-    setCurrentFilePath(fileName);
-    // Detect language based on file extension
     const extension = fileName.split('.').pop()?.toLowerCase();
-    let detectedLanguage = 'plaintext';
     
-    switch (extension) {
-      case 'js':
-        detectedLanguage = 'javascript';
-        break;
-      case 'ts':
-      case 'tsx':
-        detectedLanguage = 'typescript';
-        break;
-      case 'jsx':
-        detectedLanguage = 'javascript';
-        break;
-      case 'html':
-        detectedLanguage = 'html';
-        break;
-      case 'css':
-        detectedLanguage = 'css';
-        break;
-      case 'json':
-        detectedLanguage = 'json';
-        break;
-      case 'md':
-        detectedLanguage = 'markdown';
-        break;
-      case 'py':
-        detectedLanguage = 'python';
-        break;
-      case 'java':
-        detectedLanguage = 'java';
-        break;
-      case 'c':
-      case 'cpp':
-        detectedLanguage = 'cpp';
-        break;
-      case 'go':
-        detectedLanguage = 'go';
-        break;
-      case 'rs':
-        detectedLanguage = 'rust';
-        break;
-      default:
-        detectedLanguage = 'plaintext';
+    // Set initial content based on file type
+    if (extension === 'mermaid') {
+      if (!content || content.trim() === '') {
+        content = initialMermaidContent;
+      }
+      setEditorLanguage('mermaid');
+      setShowPreview(true);
+    } else {
+      // Map common file extensions to Monaco Editor languages
+      const languageMap: { [key: string]: string } = {
+        'js': 'javascript',
+        'jsx': 'javascript',
+        'ts': 'typescript',
+        'tsx': 'typescript',
+        'html': 'html',
+        'css': 'css',
+        'json': 'json',
+        'md': 'markdown',
+        'py': 'python',
+        'java': 'java',
+        'c': 'c',
+        'cpp': 'cpp',
+        'cs': 'csharp',
+        'go': 'go',
+        'rs': 'rust',
+        'php': 'php',
+        'rb': 'ruby',
+        'sh': 'shell',
+        'sql': 'sql',
+        'xml': 'xml',
+        'yaml': 'yaml',
+        'yml': 'yaml'
+      };
+      
+      setEditorLanguage(languageMap[extension || ''] || 'plaintext');
+      setShowPreview(['html', 'markdown'].includes(extension || ''));
     }
     
-    console.log('Setting language to:', detectedLanguage);
-    setEditorLanguage(detectedLanguage);
-
-    // Only show preview for certain file types
-    setShowPreview(['html', 'markdown'].includes(extension || ''));
+    setEditorContent(content);
+    setCurrentFilePath(fileName);
   };
 
   const handleSave = async () => {
@@ -281,11 +274,24 @@ function App() {
             showPreview={showPreview}
             isDarkMode={isDarkMode}
           />
-          {currentFilePath?.endsWith('.md') ? (
+          {currentFilePath?.endsWith('.md') || currentFilePath?.endsWith('.mmd') ? (
             <MarkdownEditor
               initialValue={editorContent}
               onChange={handleEditorChange}
             />
+          ) : currentFilePath?.endsWith('.mermaid') ? (
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: splitMode === 'horizontal' ? 'row' : 'column' }}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <CodeEditor
+                  initialValue={editorContent}
+                  language="mermaid"
+                  onChange={handleEditorChange}
+                  showPreview={true}
+                  splitMode={splitMode}
+                  isDarkMode={isDarkMode}
+                />
+              </Box>
+            </Box>
           ) : (
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: splitMode === 'horizontal' ? 'row' : 'column' }}>
               <Box sx={{ flex: 1, minWidth: 0 }}>

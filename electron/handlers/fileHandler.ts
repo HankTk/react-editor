@@ -20,7 +20,7 @@ async function openFile(mainWindow: BrowserWindow): Promise<{ content: string; f
       title: 'Open File',
       properties: ['openFile'],
       filters: [
-        { name: 'Text Files', extensions: ['txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json'] },
+        { name: 'Text Files', extensions: ['txt', 'md', 'mmd', 'mermaid', 'js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json'] },
         { name: 'All Files', extensions: ['*'] }
       ]
     });

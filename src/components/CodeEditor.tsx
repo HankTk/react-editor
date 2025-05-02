@@ -2,6 +2,24 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 import { Box, Paper } from '@mui/material';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import mermaid from 'mermaid';
+
+// Initialize mermaid
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'default',
+  securityLevel: 'loose',
+  fontFamily: 'monospace',
+  flowchart: {
+    htmlLabels: true,
+    curve: 'basis'
+  }
+});
+
+// Add a function to reset mermaid
+const resetMermaid = () => {
+  mermaid.contentLoaded();
+};
 
 interface CodeEditorProps {
   initialValue?: string;
@@ -25,12 +43,37 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const layoutTimeoutRef = useRef<NodeJS.Timeout>();
   const isTransitioningRef = useRef(false);
+  const previewRef = useRef<HTMLDivElement>(null);
 
+  // Update value when initialValue changes
   useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
+    if (language === 'mermaid' && (!initialValue || initialValue.trim() === '')) {
+      const defaultMermaid = `graph TD
+    A[Start] --> B{Is it?}
+    B -- Yes --> C[OK]
+    B -- No --> D[End]`;
+      setValue(defaultMermaid);
+      onChange?.(defaultMermaid);
+    } else {
+      setValue(initialValue);
+    }
+  }, [initialValue, language, onChange]);
 
-  const handleEditorDidMount = (editor: any, monaco: any) => {
+  // Initialize mermaid when component mounts
+  useEffect(() => {
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      securityLevel: 'loose',
+      fontFamily: 'monospace',
+      flowchart: {
+        htmlLabels: true,
+        curve: 'basis'
+      }
+    });
+  }, []);
+
+  const editorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
     
     // Apply the appropriate theme
@@ -55,6 +98,10 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
         useShadows: false,
         verticalScrollbarSize: 10,
         horizontalScrollbarSize: 10
+      },
+      bracketPairColorization: true,
+      guides: {
+        indentation: true
       }
     });
 
@@ -146,7 +193,75 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     };
   }, [debouncedLayoutUpdate]);
 
+  // Render mermaid diagrams
+  useEffect(() => {
+    if (language === 'mermaid' && previewRef.current) {
+      const renderMermaidDiagram = async () => {
+        try {
+          // Reset mermaid before rendering
+          resetMermaid();
+
+          // Debug: Log the current value
+          console.log('Current value:', value);
+
+          // Check if the content is empty or just whitespace
+          if (!value.trim()) {
+            previewRef.current!.innerHTML = '<div class="mermaid-placeholder">Enter a Mermaid diagram to see the preview</div>';
+            return;
+          }
+
+          const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+          previewRef.current!.innerHTML = `<div id="${id}" class="mermaid">${value}</div>`;
+          
+          // Wait for the DOM to be updated
+          await new Promise(resolve => setTimeout(resolve, 0));
+          
+          try {
+            const { svg } = await mermaid.render(id, value);
+            if (svg) {
+              previewRef.current!.innerHTML = '';
+              previewRef.current!.innerHTML = svg;
+            }
+          } catch (renderError) {
+            console.error('Mermaid render error:', renderError);
+            // If rendering fails, try to find and extract the graph content
+            const lines = value.split('\n');
+            const graphLine = lines.find(line => line.trim().startsWith('graph'));
+            
+            if (graphLine) {
+              // Try rendering with just the graph line
+              const { svg } = await mermaid.render(id, graphLine);
+              if (svg) {
+                previewRef.current!.innerHTML = '';
+                previewRef.current!.innerHTML = svg;
+                return;
+              }
+            }
+            
+            // If we get here, both attempts failed
+            throw renderError;
+          }
+        } catch (error) {
+          console.error('Error rendering mermaid diagram:', error);
+          previewRef.current!.innerHTML = `
+            <div class="mermaid-error">
+              <p>Error rendering diagram:</p>
+              <pre>${error}</pre>
+              <p>Please check your Mermaid syntax.</p>
+            </div>
+          `;
+        }
+      };
+
+      renderMermaidDiagram();
+    }
+  }, [value, language]);
+
   const getPreviewContent = () => {
+    if (language === 'mermaid') {
+      return '';
+    }
+
     // Only wrap in HTML for specific file types that need it
     if (language === 'html') {
       return value;
@@ -218,7 +333,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
               language={language}
               value={value}
               onChange={handleEditorChange}
-              onMount={handleEditorDidMount}
+              onMount={editorDidMount}
               theme={isDarkMode ? 'vs-dark' : 'vs'}
               options={{
                 minimap: { enabled: false },
@@ -262,19 +377,56 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                   height: '100%', 
                   bgcolor: isDarkMode ? '#1E1E1E' : '#FFFFFF',
                   overflow: 'auto',
-                  p: 2
+                  p: 2,
+                  '& .mermaid': {
+                    backgroundColor: '#f5f5f5',
+                    padding: '1rem',
+                    borderRadius: '4px',
+                    margin: '1rem 0',
+                    '& svg': {
+                      maxWidth: '100%',
+                      height: 'auto',
+                    }
+                  },
+                  '& .mermaid-placeholder': {
+                    backgroundColor: '#f5f5f5',
+                    padding: '1rem',
+                    borderRadius: '4px',
+                    margin: '1rem 0',
+                    color: '#666',
+                    fontStyle: 'italic',
+                    textAlign: 'center'
+                  },
+                  '& .mermaid-error': {
+                    backgroundColor: '#fff0f0',
+                    padding: '1rem',
+                    borderRadius: '4px',
+                    margin: '1rem 0',
+                    color: '#d32f2f',
+                    '& pre': {
+                      backgroundColor: '#f5f5f5',
+                      padding: '0.5rem',
+                      borderRadius: '4px',
+                      margin: '0.5rem 0',
+                      overflow: 'auto'
+                    }
+                  }
                 }}
               >
-                <iframe
-                  srcDoc={getPreviewContent()}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    border: 'none',
-                    backgroundColor: isDarkMode ? '#1E1E1E' : '#FFFFFF'
-                  }}
-                  title="Preview"
-                />
+                {language === 'mermaid' ? (
+                  <div ref={previewRef} />
+                ) : (
+                  <iframe
+                    srcDoc={getPreviewContent()}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                      backgroundColor: isDarkMode ? '#1E1E1E' : '#FFFFFF'
+                    }}
+                    title="Preview"
+                  />
+                )}
               </Paper>
             </Panel>
           </>
