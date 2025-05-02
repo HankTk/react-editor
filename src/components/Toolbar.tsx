@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar as MuiToolbar, Typography, IconButton, Tooltip } from '@mui/material';
+import { AppBar, Toolbar as MuiToolbar, Typography, IconButton, Tooltip, ButtonGroup } from '@mui/material';
 import {
   Undo as UndoIcon,
   Redo as RedoIcon,
@@ -13,7 +13,7 @@ import {
 interface ToolbarProps {
   onSave?: () => void;
   splitMode?: 'horizontal' | 'vertical';
-  onSplitModeChange?: () => void;
+  onSplitModeChange?: (mode: 'horizontal' | 'vertical') => void;
   showPreview?: boolean;
 }
 
@@ -45,11 +45,26 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <DarkModeIcon />
         </IconButton>
         {showPreview && (
-          <Tooltip title={`Switch to ${splitMode === 'horizontal' ? 'vertical' : 'horizontal'} split`}>
-            <IconButton size="small" onClick={onSplitModeChange}>
-              {splitMode === 'horizontal' ? <VerticalIcon /> : <HorizontalIcon />}
-            </IconButton>
-          </Tooltip>
+          <ButtonGroup size="small" aria-label="split mode">
+            <Tooltip title="Horizontal split">
+              <IconButton 
+                size="small" 
+                onClick={() => onSplitModeChange && onSplitModeChange('horizontal')}
+                color={splitMode === 'horizontal' ? 'primary' : 'default'}
+              >
+                <HorizontalIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Vertical split">
+              <IconButton 
+                size="small" 
+                onClick={() => onSplitModeChange && onSplitModeChange('vertical')}
+                color={splitMode === 'vertical' ? 'primary' : 'default'}
+              >
+                <VerticalIcon />
+              </IconButton>
+            </Tooltip>
+          </ButtonGroup>
         )}
       </MuiToolbar>
     </AppBar>

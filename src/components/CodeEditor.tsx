@@ -30,10 +30,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 
   const handleEditorDidMount = (editor: any) => {
     editorRef.current = editor;
-    // Force initial layout with a delay
-    setTimeout(() => {
-      editor.layout();
-    }, 100);
+    // Force initial layout
+    editor.layout();
   };
 
   const handleEditorChange = (value: string | undefined) => {
@@ -44,42 +42,43 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   };
 
   const updateLayout = useCallback(() => {
-    if (isTransitioningRef.current) return;
+    if (isTransitioningRef.current || !editorRef.current) return;
     
     if (layoutTimeoutRef.current) {
       clearTimeout(layoutTimeoutRef.current);
     }
 
-    isTransitioningRef.current = true;
     layoutTimeoutRef.current = setTimeout(() => {
-      if (editorRef.current) {
-        editorRef.current.layout();
-      }
-      isTransitioningRef.current = false;
-    }, 150);
+      editorRef.current.layout();
+    }, 100);
   }, []);
 
   useEffect(() => {
     // Update layout when split mode changes
-    isTransitioningRef.current = true;
-    const timeoutId = setTimeout(() => {
-      updateLayout();
-    }, 50);
+    if (editorRef.current) {
+      isTransitioningRef.current = true;
+      editorRef.current.layout();
+      
+      const timeoutId = setTimeout(() => {
+        isTransitioningRef.current = false;
+        editorRef.current.layout();
+      }, 100);
 
-    return () => {
-      if (layoutTimeoutRef.current) {
-        clearTimeout(layoutTimeoutRef.current);
-      }
-      clearTimeout(timeoutId);
-      isTransitioningRef.current = false;
-    };
-  }, [splitMode, updateLayout]);
-
-  const handlePanelResize = () => {
-    if (!isTransitioningRef.current) {
-      updateLayout();
+      return () => {
+        clearTimeout(timeoutId);
+        if (layoutTimeoutRef.current) {
+          clearTimeout(layoutTimeoutRef.current);
+        }
+        isTransitioningRef.current = false;
+      };
     }
-  };
+  }, [splitMode]);
+
+  const handlePanelResize = useCallback(() => {
+    if (!isTransitioningRef.current && editorRef.current) {
+      editorRef.current.layout();
+    }
+  }, []);
 
   const getPreviewContent = () => {
     // Only wrap in HTML for specific file types that need it

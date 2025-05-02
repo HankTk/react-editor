@@ -8,10 +8,12 @@ interface Channels {
     RESET_IMAGE: string;
     IMAGE_SELECTION_ERROR: string;
     FILE_SAVE_ERROR: string;
+    FILE_OPEN_ERROR: string;
   };
   OUTGOING: {
     RESET_IMAGE: string;
     SAVE_FILE: string;
+    OPEN_FILE: string;
   };
 }
 
@@ -21,11 +23,13 @@ const CHANNELS: Channels = {
     CUSTOM_IMAGE_SELECTED: 'custom-image-selected',
     RESET_IMAGE: 'reset-image',
     IMAGE_SELECTION_ERROR: 'image-selection-error',
-    FILE_SAVE_ERROR: 'file-save-error'
+    FILE_SAVE_ERROR: 'file-save-error',
+    FILE_OPEN_ERROR: 'file-open-error'
   },
   OUTGOING: {
     RESET_IMAGE: 'reset-image',
-    SAVE_FILE: 'save-file'
+    SAVE_FILE: 'save-file',
+    OPEN_FILE: 'open-file'
   }
 };
 
@@ -47,6 +51,7 @@ interface ElectronAPI {
     send: (channel: string, data: any) => void;
     resetImage: () => void;
     saveFile: (content: string, filePath?: string) => Promise<string | null>;
+    openFile: () => Promise<{ content: string; filePath: string } | null>;
   };
 }
 
@@ -82,6 +87,9 @@ contextBridge.exposeInMainWorld(
       },
       saveFile: async (content: string, filePath?: string) => {
         return await ipcRenderer.invoke(CHANNELS.OUTGOING.SAVE_FILE, content, filePath);
+      },
+      openFile: async () => {
+        return await ipcRenderer.invoke(CHANNELS.OUTGOING.OPEN_FILE);
       }
     }
   } as ElectronAPI

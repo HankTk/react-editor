@@ -17,6 +17,7 @@ const initialContent = `// Welcome to the Code Editor
 // Start editing your code here...`;
 
 function App() {
+
   const [editorContent, setEditorContent] = useState(initialContent);
   const [editorLanguage, setEditorLanguage] = useState('plaintext');
   const [showPreview, setShowPreview] = useState(true);
@@ -82,10 +83,16 @@ function App() {
 
   const handleSave = async () => {
     try {
+      console.log('Attempting to save file...');
+      console.log('Current file path:', currentFilePath);
+      console.log('Content length:', editorContent.length);
       const savedPath = await saveFile(editorContent, currentFilePath || undefined);
+      console.log('Save result:', savedPath);
       if (savedPath) {
         setCurrentFilePath(savedPath);
         console.log('File saved successfully at:', savedPath);
+      } else {
+        console.log('Save operation was cancelled or failed');
       }
     } catch (error) {
       console.error('Error saving file:', error);
@@ -107,7 +114,11 @@ function App() {
           showPreview={showPreview}
         />
         <Box sx={{ display: 'flex', flexGrow: 1 }}>
-          <Sidebar onFileOpen={handleFileOpen} />
+          <Sidebar 
+            onFileOpen={handleFileOpen} 
+            currentContent={editorContent}
+            currentFilePath={currentFilePath}
+          />
           <Box sx={{ flexGrow: 1 }}>
             <CodeEditor 
               initialValue={editorContent}
