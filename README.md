@@ -216,4 +216,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Screenshots
 
-![React Editor Screenshot](./documents/screenshots/main.png)
+![React Editor Screenshot](./documents/2025-05-03_09-55-29.png)
