@@ -155,6 +155,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onFileOpen, currentContent = '', curr
       >
         React Editor
       </Typography>
+      <Divider />
       <Box ref={boxRef} sx={{ overflow: 'auto' }}>
         <List>
           <ListItem component="div" onClick={handleNewFile} sx={{ cursor: 'pointer' }}>

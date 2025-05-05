@@ -8,8 +8,6 @@ import { useFileOperations } from './hooks/useFileOperations';
 import { Theme } from './types/theme';
 import { THEMES } from './constants/theme';
 
-type SplitMode = 'horizontal' | 'vertical';
-
 const initialContent = `// Welcome to the Code Editor
 // Start editing your code here...`;
 
@@ -20,7 +18,6 @@ const initialMermaidContent = `graph TD
 
 function App() {
   const [showPreview, setShowPreview] = useState(true);
-  const [splitMode, setSplitMode] = useState<SplitMode>('horizontal');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [currentTheme, setCurrentTheme] = useState<Theme>('Light');
   
@@ -40,34 +37,10 @@ function App() {
     }
   }, [currentFilePath, editorContent, setEditorContent]);
 
-  // Listen for split mode changes from the menu
-  useEffect(() => {
-    const handleSplitModeChange = (_event: any, mode: SplitMode) => {
-      console.log('Menu split mode change:', mode); // Debug log
-      setSplitMode(mode);
-    };
-
-    window.electron.ipcRenderer.on('split-mode-change', handleSplitModeChange);
-    return () => {
-      window.electron.ipcRenderer.removeListener('split-mode-change', handleSplitModeChange);
-    };
-  }, []);
-
-  // Send current split mode to main process when it changes
-  useEffect(() => {
-    console.log('Split mode changed to:', splitMode); // Debug log
-    window.electron.ipcRenderer.send('update-split-mode', splitMode);
-  }, [splitMode]);
-
   const handleThemeChange = (theme: Theme) => {
     setCurrentTheme(theme);
     setIsDarkMode(theme === 'Dark');
   };
-
-  const handleSplitModeChange = useCallback((mode: SplitMode) => {
-    console.log('Toolbar split mode change:', mode); // Debug log
-    setSplitMode(mode);
-  }, []);
 
   return (
     <ThemeProvider
@@ -88,8 +61,6 @@ function App() {
             currentFilePath={currentFilePath}
             showPreview={showPreview}
             onPreviewToggle={() => setShowPreview(!showPreview)}
-            splitMode={splitMode}
-            onSplitModeChange={handleSplitModeChange}
             isDarkMode={isDarkMode}
           />
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
@@ -98,7 +69,6 @@ function App() {
               language={editorLanguage}
               onChange={setEditorContent}
               showPreview={showPreview}
-              splitMode={splitMode}
               isDarkMode={isDarkMode}
             />
           </Box>

@@ -49,7 +49,6 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ content }) => {
         </ReactMarkdown>
       }
       showPreview={true}
-      splitMode="horizontal"
       isDarkMode={true}
     />
   );

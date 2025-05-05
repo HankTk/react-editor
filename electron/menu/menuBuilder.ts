@@ -107,41 +107,6 @@ const createThemeSubmenu = (): MenuItemConstructorOptions[] => {
 
 function createViewSubmenu(): MenuItemConstructorOptions[] {
   const baseItems: MenuItemConstructorOptions[] = [
-    {
-      label: 'Split View',
-      submenu: [
-        {
-          label: 'Horizontal Split',
-          id: 'split-horizontal',
-          accelerator: 'CmdOrCtrl+Shift+H',
-          type: 'radio',
-          checked: currentSplitMode === 'vertical',
-          click: () => {
-            currentSplitMode = 'vertical';
-            const mainWindow = getMainWindow();
-            if (mainWindow) {
-              mainWindow.webContents.send('split-mode-change', 'vertical');
-              createApplicationMenu();
-            }
-          }
-        },
-        {
-          label: 'Vertical Split',
-          id: 'split-vertical',
-          accelerator: 'CmdOrCtrl+Shift+V',
-          type: 'radio',
-          checked: currentSplitMode === 'horizontal',
-          click: () => {
-            currentSplitMode = 'horizontal';
-            const mainWindow = getMainWindow();
-            if (mainWindow) {
-              mainWindow.webContents.send('split-mode-change', 'horizontal');
-              createApplicationMenu();
-            }
-          }
-        }
-      ]
-    },
     { type: 'separator' },
     { role: 'resetZoom' },
     { role: 'zoomIn' },
@@ -159,11 +124,8 @@ function createViewSubmenu(): MenuItemConstructorOptions[] {
   ] : baseItems;
 }
 
-// Listen for split mode updates from renderer
-ipcMain.on('update-split-mode', (_event, mode) => {
-  currentSplitMode = mode;
-  createApplicationMenu();
-});
+// Initialize menu with default state
+createApplicationMenu();
 
 export {
   createApplicationMenu

@@ -27,7 +27,6 @@ export interface CodeEditorProps {
   language: string;
   onChange: (value: string) => void;
   showPreview?: boolean;
-  splitMode?: 'horizontal' | 'vertical';
   isDarkMode?: boolean;
 }
 
@@ -36,7 +35,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   language,
   onChange,
   showPreview = true,
-  splitMode = 'horizontal',
   isDarkMode = true
 }) => {
   const [editorValue, setEditorValue] = useState(value);
@@ -55,13 +53,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
       setEditorValue(value);
     }
   }, [value, language, onChange]);
-
-  useEffect(() => {
-    if (previewRef.current) {
-      const event = new Event('resize');
-      window.dispatchEvent(event);
-    }
-  }, [splitMode]);
 
   const editorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
@@ -108,6 +99,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   useEffect(() => {
     if (language === 'mermaid' && previewRef.current) {
       try {
+        console.log('Initializing Mermaid with content:', editorValue);
+        
         mermaid.initialize({
           startOnLoad: true,
           theme: isDarkMode ? 'dark' : 'default',
@@ -118,9 +111,73 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
             curve: 'basis'
           }
         });
-        mermaid.render('mermaid-diagram', editorValue).then(({ svg }) => {
+
+        // Check if content is empty or just whitespace
+        if (!editorValue || editorValue.trim() === '') {
+          console.log('Empty content detected, showing default diagram');
           if (previewRef.current) {
-            previewRef.current.innerHTML = svg;
+            previewRef.current.innerHTML = '<div style="color: #666;">Enter a Mermaid diagram...</div>';
+          }
+          return;
+        }
+
+        // Try to detect diagram type if not specified
+        let diagramContent = editorValue.trim();
+        console.log('Original diagram content:', diagramContent);
+        
+        // Remove any comments (lines starting with //)
+        diagramContent = diagramContent.split('\n')
+          .filter(line => !line.trim().startsWith('//'))
+          .join('\n')
+          .trim();
+        
+        console.log('Content after removing comments:', diagramContent);
+
+        // If content is empty after removing comments, show default diagram
+        if (!diagramContent) {
+          console.log('Content empty after comment removal, using default diagram');
+          diagramContent = `graph TD
+    A[Start] --> B{Is it?}
+    B -- Yes --> C[OK]
+    B -- No --> D[End]`;
+        }
+        // If content doesn't start with a diagram type, wrap it in a graph
+        else if (!diagramContent.startsWith('graph') && 
+            !diagramContent.startsWith('sequenceDiagram') && 
+            !diagramContent.startsWith('classDiagram') && 
+            !diagramContent.startsWith('stateDiagram') && 
+            !diagramContent.startsWith('erDiagram') && 
+            !diagramContent.startsWith('flowchart') && 
+            !diagramContent.startsWith('gantt') && 
+            !diagramContent.startsWith('pie') && 
+            !diagramContent.startsWith('journey')) {
+          console.log('No diagram type detected, wrapping in graph TD');
+          diagramContent = `graph TD\n${diagramContent}`;
+        }
+
+        console.log('Final diagram content to render:', diagramContent);
+
+        // Reset mermaid before rendering
+        resetMermaid();
+
+        // Create a unique ID for this render
+        const diagramId = `mermaid-diagram-${Date.now()}`;
+        
+        mermaid.render(diagramId, diagramContent).then(({ svg }) => {
+          console.log('Mermaid render successful');
+          if (previewRef.current) {
+            // Create a container div with the mermaid class
+            const container = document.createElement('div');
+            container.className = 'mermaid';
+            container.innerHTML = svg;
+            previewRef.current.innerHTML = '';
+            previewRef.current.appendChild(container);
+            
+            // Force a reflow to ensure the SVG is properly sized
+            previewRef.current.style.display = 'none';
+            // Use void operator to handle the expression
+            void previewRef.current.offsetHeight;
+            previewRef.current.style.display = 'flex';
           }
         }).catch((error: Error) => {
           console.error('Error rendering mermaid diagram:', error);
@@ -153,7 +210,15 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
             justifyContent: 'center',
             '& svg': {
               maxWidth: '100%',
-              height: 'auto'
+              height: 'auto',
+              display: 'block'
+            },
+            '& .mermaid': {
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }
           }}
         />
@@ -311,39 +376,40 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   return (
     <EditorPanel
       editor={
-        <Editor
-          height="100%"
-          language={language}
-          value={editorValue}
-          onChange={handleEditorChange}
-          onMount={editorDidMount}
-          theme={isDarkMode ? 'vs-dark' : 'vs'}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 14,
-            wordWrap: 'on',
-            automaticLayout: true,
-            tabSize: 2,
-            scrollBeyondLastLine: false,
-            renderWhitespace: 'none',
-            folding: true,
-            lineNumbers: 'on',
-            glyphMargin: false,
-            lineDecorationsWidth: 0,
-            lineNumbersMinChars: 3,
-            scrollbar: {
-              vertical: 'visible',
-              horizontal: 'visible',
-              useShadows: false,
-              verticalScrollbarSize: 10,
-              horizontalScrollbarSize: 10
-            }
-          }}
-        />
+        <Box sx={{ height: '100%', width: '100%' }}>
+          <Editor
+            height="100%"
+            language={language}
+            value={editorValue}
+            onChange={handleEditorChange}
+            onMount={editorDidMount}
+            theme={isDarkMode ? 'vs-dark' : 'vs'}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              wordWrap: 'on',
+              automaticLayout: true,
+              tabSize: 2,
+              scrollBeyondLastLine: false,
+              renderWhitespace: 'none',
+              folding: true,
+              lineNumbers: 'on',
+              glyphMargin: false,
+              lineDecorationsWidth: 0,
+              lineNumbersMinChars: 3,
+              scrollbar: {
+                vertical: 'visible',
+                horizontal: 'visible',
+                useShadows: false,
+                verticalScrollbarSize: 10,
+                horizontalScrollbarSize: 10
+              }
+            }}
+          />
+        </Box>
       }
       preview={renderPreview()}
       showPreview={showPreview}
-      splitMode={splitMode}
       isDarkMode={isDarkMode}
     />
   );
